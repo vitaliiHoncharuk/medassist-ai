@@ -1,0 +1,299 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  /* --- Colors (Light mode default — OKLCH "Midnight Surgical" palette) --- */
+
+  /* Structure (Navy-Slate) */
+  --color-background: oklch(0.985 0.005 265);
+  --color-surface: oklch(0.97 0.008 260);
+  --color-surface-elevated: oklch(0.94 0.012 260);
+  --color-primary: oklch(0.25 0.06 265);
+  --color-primary-foreground: oklch(0.98 0.005 265);
+
+  /* Intelligence (Amber) */
+  --color-accent: oklch(0.68 0.17 65);
+  --color-accent-foreground: oklch(0.20 0.04 50);
+  --color-secondary: oklch(0.55 0.14 65);
+  --color-secondary-foreground: oklch(0.98 0.005 265);
+
+  /* Text hierarchy */
+  --color-text: oklch(0.18 0.04 265);
+  --color-text-muted: oklch(0.50 0.025 265);
+  --color-foreground: oklch(0.18 0.04 265);
+  --color-muted-foreground: oklch(0.50 0.025 265);
+
+  /* Borders */
+  --color-border: oklch(0.90 0.01 260);
+  --color-border-accent: oklch(0.68 0.17 65 / 0.35);
+
+  /* Chat-specific */
+  --color-user-bubble: oklch(0.25 0.06 265);
+  --color-user-bubble-text: oklch(0.97 0.005 265);
+  --color-assistant-stripe: oklch(0.68 0.17 65);
+
+  /* Functional */
+  --color-destructive: oklch(0.55 0.22 25);
+  --color-destructive-foreground: oklch(0.98 0.005 265);
+  --color-error: oklch(0.55 0.22 25);
+  --color-success: oklch(0.60 0.18 155);
+  --color-disclaimer: oklch(0.93 0.04 85);
+  --color-disclaimer-text: oklch(0.38 0.08 65);
+
+  /* shadcn compat */
+  --color-muted: oklch(0.94 0.012 260);
+  --color-input: oklch(0.97 0.008 260);
+  --color-ring: oklch(0.68 0.17 65);
+  --color-popover: oklch(0.985 0.005 265);
+  --color-popover-foreground: oklch(0.18 0.04 265);
+  --color-card: oklch(0.985 0.005 265);
+  --color-card-foreground: oklch(0.18 0.04 265);
+
+  /* --- Typography --- */
+  --font-heading: "Newsreader", "Georgia", serif;
+  --font-body: "Archivo", "Arial", sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, monospace;
+  --font-sans: "Archivo", "Arial", sans-serif;
+
+  /* --- Radius --- */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+
+  /* --- Shadows (navy undertone) --- */
+  --shadow-sm: 0 1px 3px 0 oklch(0.25 0.06 265 / 0.08), 0 1px 2px -1px oklch(0.25 0.06 265 / 0.06);
+  --shadow-md: 0 4px 6px -1px oklch(0.25 0.06 265 / 0.08), 0 2px 4px -2px oklch(0.25 0.06 265 / 0.05);
+  --shadow-lg: 0 10px 15px -3px oklch(0.25 0.06 265 / 0.08), 0 4px 6px -4px oklch(0.25 0.06 265 / 0.05);
+  --shadow-inset-depth: inset 0 1px 2px 0 oklch(0.25 0.06 265 / 0.06);
+
+  /* --- CSS Animations --- */
+  --animate-waveform: waveform 1.2s ease-in-out infinite;
+  --animate-pulse-ring: pulse-ring 3s cubic-bezier(0, 0, 0.2, 1) infinite;
+  --animate-cursor-blink: cursor-blink 0.8s step-end infinite;
+  --animate-fade-in: fade-in 0.3s ease-out;
+  --animate-fade-up: fade-up 0.5s ease-out forwards;
+  --animate-slide-up: slide-up 0.3s ease-out;
+
+  /* --- Sidebar (shadcn compat) --- */
+  --color-sidebar-ring: oklch(0.68 0.17 65);
+  --color-sidebar-border: oklch(0.90 0.01 260);
+  --color-sidebar-accent-foreground: oklch(0.18 0.04 265);
+  --color-sidebar-accent: oklch(0.94 0.012 260);
+  --color-sidebar-primary-foreground: oklch(0.98 0.005 265);
+  --color-sidebar-primary: oklch(0.68 0.17 65);
+  --color-sidebar-foreground: oklch(0.18 0.04 265);
+  --color-sidebar: oklch(0.97 0.008 260);
+
+  /* --- Charts (shadcn compat) --- */
+  --color-chart-1: oklch(0.68 0.17 65);
+  --color-chart-2: oklch(0.60 0.15 155);
+  --color-chart-3: oklch(0.55 0.12 265);
+  --color-chart-4: oklch(0.70 0.15 30);
+  --color-chart-5: oklch(0.65 0.12 320);
+}
+
+/* --- Dark Mode --- */
+.dark {
+  /* Structure (Deep Navy) */
+  --color-background: oklch(0.13 0.025 265);
+  --color-surface: oklch(0.18 0.03 262);
+  --color-surface-elevated: oklch(0.23 0.03 260);
+  --color-primary: oklch(0.92 0.01 265);
+  --color-primary-foreground: oklch(0.13 0.025 265);
+
+  /* Intelligence (Amber — brighter for dark) */
+  --color-accent: oklch(0.75 0.17 65);
+  --color-accent-foreground: oklch(0.15 0.04 50);
+  --color-secondary: oklch(0.65 0.14 65);
+  --color-secondary-foreground: oklch(0.13 0.025 265);
+
+  /* Text hierarchy */
+  --color-text: oklch(0.90 0.015 265);
+  --color-text-muted: oklch(0.55 0.02 265);
+  --color-foreground: oklch(0.90 0.015 265);
+  --color-muted-foreground: oklch(0.55 0.02 265);
+
+  /* Borders */
+  --color-border: oklch(0.25 0.025 262);
+  --color-border-accent: oklch(0.75 0.17 65 / 0.3);
+
+  /* Chat */
+  --color-user-bubble: oklch(0.23 0.05 265);
+  --color-user-bubble-text: oklch(0.92 0.01 265);
+  --color-assistant-stripe: oklch(0.75 0.17 65);
+
+  /* Functional */
+  --color-destructive: oklch(0.60 0.22 25);
+  --color-destructive-foreground: oklch(0.13 0.025 265);
+  --color-error: oklch(0.60 0.22 25);
+  --color-success: oklch(0.65 0.18 155);
+  --color-disclaimer: oklch(0.22 0.04 85);
+  --color-disclaimer-text: oklch(0.80 0.06 75);
+
+  /* shadcn compat */
+  --color-muted: oklch(0.23 0.03 260);
+  --color-input: oklch(0.18 0.03 262);
+  --color-ring: oklch(0.75 0.17 65);
+  --color-popover: oklch(0.18 0.03 262);
+  --color-popover-foreground: oklch(0.90 0.015 265);
+  --color-card: oklch(0.18 0.03 262);
+  --color-card-foreground: oklch(0.90 0.015 265);
+  --color-sidebar: oklch(0.18 0.03 262);
+  --color-sidebar-foreground: oklch(0.90 0.015 265);
+  --color-sidebar-accent: oklch(0.23 0.03 260);
+  --color-sidebar-accent-foreground: oklch(0.90 0.015 265);
+  --color-sidebar-border: oklch(0.25 0.025 262);
+}
+
+/* --- Keyframe Definitions --- */
+@keyframes rotate-border {
+  from { --border-angle: 0deg; }
+  to { --border-angle: 360deg; }
+}
+
+@property --border-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes waveform {
+  0%, 100% { transform: scaleY(0.3); opacity: 0.3; }
+  50% { transform: scaleY(1); opacity: 1; }
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(1); opacity: 0.3; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Reduced Motion Fallbacks --- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* --- Base Styles --- */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    @apply font-sans;
+  }
+
+  body {
+    @apply bg-background text-text antialiased;
+  }
+}
+
+/* --- Utility Classes --- */
+@layer utilities {
+  .text-gradient {
+    background: linear-gradient(135deg, var(--color-text) 0%, var(--color-accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .glass {
+    backdrop-filter: blur(12px) saturate(180%);
+    background: oklch(0.985 0.005 265 / 0.85);
+  }
+
+  .dark .glass {
+    background: oklch(0.13 0.025 265 / 0.85);
+  }
+
+  .streaming-cursor::after {
+    content: "";
+    display: inline-block;
+    width: 2px;
+    height: 1em;
+    background: var(--color-accent);
+    margin-left: 2px;
+    vertical-align: text-bottom;
+    animation: cursor-blink 0.8s step-end infinite;
+  }
+
+  .bg-dot-grid {
+    background-image: radial-gradient(circle, oklch(0.68 0.17 65 / 0.04) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  .dark .bg-dot-grid {
+    background-image: radial-gradient(circle, oklch(0.75 0.17 65 / 0.025) 1px, transparent 1px);
+  }
+}
+
+/* --- Code Block Syntax Highlighting --- */
+.hljs {
+  background: var(--color-surface-elevated) !important;
+  color: var(--color-text) !important;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-literal,
+.hljs-section,
+.hljs-link {
+  color: var(--color-accent) !important;
+}
+
+.hljs-string,
+.hljs-title,
+.hljs-name,
+.hljs-type,
+.hljs-attribute,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition,
+.hljs-variable,
+.hljs-template-tag,
+.hljs-template-variable {
+  color: oklch(0.60 0.18 155) !important;
+}
+
+.hljs-comment,
+.hljs-quote,
+.hljs-deletion,
+.hljs-meta {
+  color: var(--color-text-muted) !important;
+}
+
+.hljs-number,
+.hljs-regexp,
+.hljs-built_in {
+  color: oklch(0.65 0.15 30) !important;
+}
