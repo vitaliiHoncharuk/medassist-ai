@@ -23,6 +23,7 @@ import {
   updateConversation,
   generateConversationTitle,
 } from "@/lib/chat/storage";
+import { extractTextFromParts } from "@/lib/chat/utils";
 
 const transport = new DefaultChatTransport({ api: "/api/chat" });
 
@@ -73,31 +74,33 @@ const ChatContainer = (): ReactElement => {
     }
   }, [setMessages]);
 
-  // Persist messages when they change
+  // Persist messages when they change (debounced to avoid firing on every streaming token)
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
   useEffect(() => {
     const currentId = activeConversationIdRef.current;
     if (!currentId || messages.length === 0) return;
 
-    saveMessages(currentId, messages);
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      saveMessages(currentId, messages);
+    }, 300);
 
     if (
       !titleUpdatedRef.current &&
       messages.length >= 1 &&
       messages[0]?.role === "user"
     ) {
-      const firstUserText =
-        messages[0].parts
-          ?.filter(
-            (p): p is Extract<typeof p, { type: "text" }> => p.type === "text"
-          )
-          .map((p) => p.text)
-          .join("") ?? "";
+      const firstUserText = extractTextFromParts(messages[0]);
       if (firstUserText) {
         const title = generateConversationTitle(firstUserText);
         updateConversation(currentId, { title });
         titleUpdatedRef.current = true;
       }
     }
+
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
   }, [messages]);
 
   const ensureConversation = useCallback((): string => {
@@ -129,13 +132,21 @@ const ChatContainer = (): ReactElement => {
     [ensureConversation, sendMessage]
   );
 
+  const handleNewChat = useCallback((): void => {
+    setActiveConversationId(null);
+    activeConversationIdRef.current = null;
+    titleUpdatedRef.current = false;
+    setMessages([]);
+    setInput("");
+  }, [setMessages]);
+
   const handleErrorReset = useCallback((): void => {
     setMessages([]);
   }, [setMessages]);
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden">
-      <ChatHeader />
+      <ChatHeader onNewChat={handleNewChat} hasMessages={messages.length > 0} />
 
       <main className="flex min-h-0 flex-1 flex-col">
         <ErrorBoundary onReset={handleErrorReset}>

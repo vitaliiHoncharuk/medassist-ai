@@ -4,15 +4,15 @@ import { openai } from "@ai-sdk/openai";
 const EMBEDDING_MODEL = "text-embedding-3-small";
 const BATCH_SIZE = 100;
 
-/** Dimension of the text-embedding-3-small model output. Shared with DB schema. */
-export const EMBEDDING_DIM = 1536;
-
 /**
  * Generate embedding for a single text string.
  */
 export const generateEmbedding = async (
   text: string
 ): Promise<number[]> => {
+  if (!text.trim()) {
+    throw new Error("Cannot generate embedding for empty text");
+  }
   const { embedding } = await embed({
     model: openai.embedding(EMBEDDING_MODEL),
     value: text,
@@ -27,6 +27,10 @@ export const generateEmbedding = async (
 export const generateEmbeddings = async (
   texts: string[]
 ): Promise<number[][]> => {
+  const nonEmpty = texts.filter((t) => t.trim());
+  if (nonEmpty.length !== texts.length) {
+    throw new Error("Cannot generate embeddings for empty text entries");
+  }
   const allEmbeddings: number[][] = [];
 
   for (let i = 0; i < texts.length; i += BATCH_SIZE) {

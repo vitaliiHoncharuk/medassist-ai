@@ -6,7 +6,7 @@ import rehypeHighlight from "rehype-highlight";
 import { Check, Copy } from "lucide-react";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
-import { springs } from "@/lib/motion";
+import { springs, rm, rmTransition } from "@/lib/motion";
 
 type CopyButtonProps = {
   code: string;
@@ -34,7 +34,7 @@ const CopyButton = ({ code }: CopyButtonProps): ReactElement => {
         "absolute right-2 top-2 rounded-[var(--radius-sm)] p-1.5",
         "bg-surface/80 text-text-muted hover:text-text",
         "opacity-0 transition-opacity duration-150 group-hover:opacity-100",
-        "focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-accent"
+        "focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
       )}
       aria-label={copied ? "Copied" : "Copy code"}
     >
@@ -42,24 +42,10 @@ const CopyButton = ({ code }: CopyButtonProps): ReactElement => {
         {copied ? (
           <m.span
             key="check"
-            initial={
-              shouldReduceMotion
-                ? { opacity: 0 }
-                : { opacity: 0, rotate: -90, scale: 0.5 }
-            }
-            animate={
-              shouldReduceMotion
-                ? { opacity: 1 }
-                : { opacity: 1, rotate: 0, scale: 1 }
-            }
-            exit={
-              shouldReduceMotion
-                ? { opacity: 0 }
-                : { opacity: 0, scale: 0.5 }
-            }
-            transition={
-              shouldReduceMotion ? { duration: 0.01 } : springs.snappy
-            }
+            initial={rm(shouldReduceMotion, { opacity: 0, rotate: -90, scale: 0.5 })}
+            animate={rm(shouldReduceMotion, { opacity: 1, rotate: 0, scale: 1 })}
+            exit={rm(shouldReduceMotion, { opacity: 0, scale: 0.5 })}
+            transition={rmTransition(shouldReduceMotion, springs.snappy)}
             className="block"
           >
             <Check className="size-4 text-success" />
@@ -67,22 +53,10 @@ const CopyButton = ({ code }: CopyButtonProps): ReactElement => {
         ) : (
           <m.span
             key="copy"
-            initial={
-              shouldReduceMotion
-                ? { opacity: 0 }
-                : { opacity: 0, scale: 0.5 }
-            }
-            animate={
-              shouldReduceMotion ? { opacity: 1 } : { opacity: 1, scale: 1 }
-            }
-            exit={
-              shouldReduceMotion
-                ? { opacity: 0 }
-                : { opacity: 0, scale: 0.5 }
-            }
-            transition={
-              shouldReduceMotion ? { duration: 0.01 } : springs.snappy
-            }
+            initial={rm(shouldReduceMotion, { opacity: 0, scale: 0.5 })}
+            animate={rm(shouldReduceMotion, { opacity: 1, scale: 1 })}
+            exit={rm(shouldReduceMotion, { opacity: 0, scale: 0.5 })}
+            transition={rmTransition(shouldReduceMotion, springs.snappy)}
             className="block"
           >
             <Copy className="size-4" />

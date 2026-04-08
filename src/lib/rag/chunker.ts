@@ -23,8 +23,11 @@ export const chunkText = (text: string): Chunk[] => {
   const targetChars = TARGET_CHUNK_SIZE * APPROX_CHARS_PER_TOKEN;
   const overlapChars = OVERLAP_SIZE * APPROX_CHARS_PER_TOKEN;
 
-  // Split into sentences
-  const sentences = cleaned.match(/[^.!?]+[.!?]+\s*|[^.!?]+$/g) ?? [cleaned];
+  // Split into sentences — handles medical abbreviations (Dr., mg., i.v., e.g., Fig., etc.)
+  const sentences =
+    cleaned.match(
+      /(?:(?:Dr|Mr|Mrs|Ms|Prof|Fig|Vol|No|vs|etc|e\.g|i\.e|i\.v|i\.m|s\.c|p\.o|b\.i\.d|t\.i\.d|q\.i\.d|q\.d|h\.s|p\.r\.n|mg|mL|dL|mcg)\.\s*|[^.!?])+[.!?]+\s*|[^.!?]+$/gi
+    ) ?? [cleaned];
 
   const chunks: Chunk[] = [];
   let currentChunk = "";

@@ -4,6 +4,8 @@ import {
   Component,
   useState,
   useCallback,
+  useEffect,
+  useRef,
   type ReactNode,
   type ReactElement,
 } from "react";
@@ -50,10 +52,18 @@ type ErrorFallbackProps = {
 const ErrorFallback = ({ onReset }: ErrorFallbackProps): ReactElement => {
   const [isResetting, setIsResetting] = useState(false);
 
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
   const handleReset = useCallback((): void => {
     setIsResetting(true);
-    // Brief delay so user sees the loading state before the reset clears the component
-    setTimeout(() => {
+    timerRef.current = setTimeout(() => {
+      setIsResetting(false);
       onReset();
     }, 400);
   }, [onReset]);

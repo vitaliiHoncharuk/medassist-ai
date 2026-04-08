@@ -1,75 +1,22 @@
 "use client";
 
-import { useState, useEffect, useCallback, type ReactElement } from "react";
+import { useCallback, type ReactElement } from "react";
 import { AnimatePresence } from "motion/react";
-import { FileText, Loader2 } from "lucide-react";
+import { FileText, Loader2, RefreshCw } from "lucide-react";
 import { DocumentCard } from "./document-card";
 import { DocumentUpload } from "./document-upload";
-
-type DocumentData = {
-  id: string;
-  name: string;
-  chunkCount: number;
-  createdAt: string | Date | null;
-};
-
-type ApiDocument = {
-  id: string;
-  name: string;
-  chunkCount: number;
-  createdAt: string | null;
-};
+import { useDocuments, useInvalidateDocuments } from "@/lib/api/hooks";
+import { Button } from "@/components/ui/button";
 
 const DocumentList = (): ReactElement => {
-  const [documents, setDocuments] = useState<DocumentData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchDocuments = useCallback(async (): Promise<void> => {
-    try {
-      setError(null);
-      const response = await fetch("/api/documents");
-      if (!response.ok) {
-        setError("Failed to load documents");
-        return;
-      }
-
-      const data: unknown = await response.json();
-      if (
-        data &&
-        typeof data === "object" &&
-        "documents" in data &&
-        Array.isArray((data as { documents: unknown }).documents)
-      ) {
-        setDocuments(
-          (
-            (data as { documents: ApiDocument[] }).documents
-          ).map((doc) => ({
-            id: doc.id,
-            name: doc.name,
-            chunkCount: doc.chunkCount,
-            createdAt: doc.createdAt,
-          }))
-        );
-      }
-    } catch {
-      setError("Network error. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void fetchDocuments();
-  }, [fetchDocuments]);
+  const { data: documents = [], isLoading, error, refetch } = useDocuments();
+  const invalidateDocuments = useInvalidateDocuments();
 
   const handleUploadComplete = useCallback((): void => {
-    void fetchDocuments();
-  }, [fetchDocuments]);
+    invalidateDocuments();
+  }, [invalidateDocuments]);
 
-  const handleDelete = useCallback((id: string): void => {
-    setDocuments((prev) => prev.filter((doc) => doc.id !== id));
-  }, []);
+  const errorMessage = error instanceof Error ? error.message : "Failed to load documents";
 
   return (
     <div className="space-y-8">
@@ -94,8 +41,17 @@ const DocumentList = (): ReactElement => {
         )}
 
         {error && (
-          <div className="rounded-xl border border-error/20 bg-error/5 p-5 text-sm text-error" role="alert">
-            {error}
+          <div className="flex items-center justify-between rounded-xl border border-error/20 bg-error/5 p-5 text-sm text-error" role="alert">
+            <span>{errorMessage}</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => void refetch()}
+              className="gap-1.5 text-error hover:text-error"
+            >
+              <RefreshCw className="size-3.5" />
+              Retry
+            </Button>
           </div>
         )}
 
@@ -125,7 +81,6 @@ const DocumentList = (): ReactElement => {
                   name={doc.name}
                   chunkCount={doc.chunkCount}
                   createdAt={doc.createdAt}
-                  onDelete={handleDelete}
                   index={index}
                 />
               ))}

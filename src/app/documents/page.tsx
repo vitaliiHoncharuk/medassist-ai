@@ -2,7 +2,8 @@ import type { Metadata, NextPage } from "next";
 import type { ReactElement } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button-variants";
 import { DocumentList } from "@/components/documents/document-list";
 
 export const metadata: Metadata = {
@@ -14,14 +15,15 @@ export const metadata: Metadata = {
 const DocumentsPage: NextPage = (): ReactElement => {
   return (
     <div className="min-h-dvh bg-background">
-      {/* Header section with background */}
       <div className="border-b border-border bg-surface/50">
         <div className="mx-auto max-w-4xl px-6 py-10 sm:px-8">
           <div className="flex items-start gap-4">
-            <Link href="/">
-              <Button variant="ghost" size="icon" className="mt-1 shrink-0">
-                <ArrowLeft className="size-4" />
-              </Button>
+            <Link
+              href="/"
+              aria-label="Back to chat"
+              className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "mt-1 shrink-0")}
+            >
+              <ArrowLeft className="size-4" />
             </Link>
             <div>
               <p className="font-body text-[11px] font-semibold uppercase tracking-[0.1em] text-accent">
@@ -39,7 +41,6 @@ const DocumentsPage: NextPage = (): ReactElement => {
         </div>
       </div>
 
-      {/* Content */}
       <div className="mx-auto max-w-4xl px-6 py-8 sm:px-8">
         <DocumentList />
       </div>

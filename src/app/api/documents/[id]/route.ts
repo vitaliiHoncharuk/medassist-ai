@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 
 import { getDb } from "@/lib/db";
 import { documents } from "@/lib/db/schema";
+import { jsonError } from "@/lib/api/response";
 
 const paramsSchema = z.object({
   id: z.string().uuid("Invalid document ID"),
@@ -22,9 +23,9 @@ export const DELETE = async (
     const validation = paramsSchema.safeParse(resolvedParams);
 
     if (!validation.success) {
-      return NextResponse.json(
-        { error: validation.error.issues[0]?.message ?? "Invalid parameters" },
-        { status: 400 }
+      return jsonError(
+        validation.error.issues[0]?.message ?? "Invalid parameters",
+        400
       );
     }
 
@@ -35,17 +36,14 @@ export const DELETE = async (
       .returning({ id: documents.id });
 
     if (deleted.length === 0) {
-      return NextResponse.json(
-        { error: "Document not found" },
-        { status: 404 }
-      );
+      return jsonError("Document not found", 404);
     }
 
     return NextResponse.json({ success: true });
-  } catch {
-    return NextResponse.json(
-      { error: "Failed to delete document" },
-      { status: 500 }
-    );
+  } catch (error) {
+     
+     
+    console.error("Document delete error:", error);
+    return jsonError("Failed to delete document", 500);
   }
 };

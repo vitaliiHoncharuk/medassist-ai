@@ -5,10 +5,11 @@ import { z } from "zod";
 import { CHAT_CONFIG, SYSTEM_PROMPT } from "@/lib/chat/constants";
 import { checkRateLimit } from "@/lib/chat/rate-limit";
 import { extractClientIp } from "@/lib/chat/extract-ip";
+import { jsonError } from "@/lib/api/response";
 import { retrieveRelevantChunks } from "@/lib/rag/retrieval";
 
 const messagePartSchema = z.object({
-  type: z.string(),
+  type: z.enum(["text", "reasoning", "tool-invocation", "tool-result", "file", "source"]),
   text: z.string().optional(),
 });
 
@@ -72,15 +73,9 @@ export const POST = async (req: Request): Promise<Response> => {
     const rateLimitResult = await checkRateLimit(ip);
 
     if (!rateLimitResult.success) {
-      return new Response(
-        JSON.stringify({
-          error:
-            "Too many requests. Please wait a moment before sending another message.",
-        }),
-        {
-          status: 429,
-          headers: { "Content-Type": "application/json" },
-        }
+      return jsonError(
+        "Too many requests. Please wait a moment before sending another message.",
+        429
       );
     }
 
@@ -88,13 +83,7 @@ export const POST = async (req: Request): Promise<Response> => {
     const parsed = chatRequestSchema.safeParse(body);
 
     if (!parsed.success) {
-      return new Response(
-        JSON.stringify({ error: "Invalid request body" }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
+      return jsonError("Invalid request body", 400);
     }
 
     // Cast to UIMessage[] — Zod validated the structure, SDK expects its own type
@@ -105,28 +94,23 @@ export const POST = async (req: Request): Promise<Response> => {
 
     // Reject empty/whitespace-only messages
     if (!lastUserMessage.trim()) {
-      return new Response(
-        JSON.stringify({
-          error:
-            "Please type a question so I can search the uploaded documents for relevant information.",
-        }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        }
+      return jsonError(
+        "Please type a question so I can search the uploaded documents for relevant information.",
+        400
       );
     }
 
     // Perform RAG retrieval
     let contextPrompt = "";
-    if (lastUserMessage) {
-      try {
-        const relevantChunks = await retrieveRelevantChunks(lastUserMessage);
-        contextPrompt = buildContextPrompt(relevantChunks);
-      } catch {
-        contextPrompt =
-          "Note: Document retrieval is temporarily unavailable. Answer based on general knowledge but inform the user that document search encountered an error.";
-      }
+    try {
+      const relevantChunks = await retrieveRelevantChunks(lastUserMessage);
+      contextPrompt = buildContextPrompt(relevantChunks);
+    } catch (error) {
+       
+       
+      console.error("RAG retrieval failed:", error);
+      contextPrompt =
+        "Note: Document retrieval is temporarily unavailable. Answer based on general knowledge but inform the user that document search encountered an error.";
     }
 
     // Build system prompt with context
@@ -143,15 +127,10 @@ export const POST = async (req: Request): Promise<Response> => {
     });
 
     return result.toUIMessageStreamResponse();
-  } catch {
-    return new Response(
-      JSON.stringify({
-        error: "An unexpected error occurred. Please try again.",
-      }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+  } catch (error) {
+     
+     
+    console.error("Chat route error:", error);
+    return jsonError("An unexpected error occurred. Please try again.", 500);
   }
 };

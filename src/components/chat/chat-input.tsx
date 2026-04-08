@@ -12,7 +12,7 @@ import {
 import { ArrowUp, Shield } from "lucide-react";
 import { m, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
-import { springs } from "@/lib/motion";
+import { springs, rmTransition } from "@/lib/motion";
 
 type ChatInputProps = {
   value: string;
@@ -57,26 +57,23 @@ const ChatInput = ({
     [onChange]
   );
 
+  const canSend = !isDisabled && value.trim().length > 0;
+
+  const handleSend = useCallback((): void => {
+    if (!canSend) return;
+    onSend();
+    textareaRef.current?.focus();
+  }, [canSend, onSend]);
+
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLTextAreaElement>): void => {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
-        if (!isDisabled && value.trim()) {
-          onSend();
-        }
+        handleSend();
       }
     },
-    [isDisabled, value, onSend]
+    [handleSend]
   );
-
-  const handleSendClick = useCallback((): void => {
-    if (!isDisabled && value.trim()) {
-      onSend();
-      textareaRef.current?.focus();
-    }
-  }, [isDisabled, value, onSend]);
-
-  const canSend = !isDisabled && value.trim().length > 0;
 
   return (
     <div className="shrink-0 bg-background pb-[env(safe-area-inset-bottom)]">
@@ -84,7 +81,7 @@ const ChatInput = ({
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            if (canSend) onSend();
+            handleSend();
           }}
           className="py-3"
         >
@@ -115,7 +112,7 @@ const ChatInput = ({
               className={cn(
                 "relative rounded-2xl border bg-surface transition-all duration-300",
                 isFocused
-                  ? "border-transparent bg-surface shadow-[0_0_0_1px_var(--color-border),0_4px_24px_-4px_oklch(0.68_0.17_65/0.12)]"
+                  ? "border-transparent bg-surface shadow-[0_0_0_1px_var(--color-border),0_4px_24px_-4px_color-mix(in_oklch,var(--color-accent)_12%,transparent)]"
                   : "border-border shadow-[var(--shadow-sm)]"
               )}
             >
@@ -130,8 +127,8 @@ const ChatInput = ({
                 disabled={isDisabled}
                 rows={MIN_ROWS}
                 className={cn(
-                  "w-full resize-none rounded-2xl bg-transparent px-4 py-3.5 pr-13",
-                  "font-body text-sm leading-6 text-text placeholder:text-text-muted/50",
+                  "w-full resize-none rounded-2xl bg-transparent px-4 py-3.5 pr-13 sm:px-5 sm:py-4 sm:pr-14",
+                  "font-body text-sm leading-6 text-text placeholder:text-text-muted/50 sm:text-base sm:leading-7",
                   "focus:outline-none",
                   "disabled:cursor-not-allowed disabled:opacity-50"
                 )}
@@ -141,13 +138,13 @@ const ChatInput = ({
               {/* Send button */}
               <m.button
                 type="button"
-                onClick={handleSendClick}
+                onClick={handleSend}
                 disabled={!canSend}
                 className={cn(
-                  "absolute bottom-2.5 right-2.5 flex size-8 items-center justify-center rounded-lg",
-                  "text-accent-foreground",
+                  "absolute bottom-2.5 right-2.5 flex size-8 items-center justify-center rounded-lg sm:bottom-3 sm:right-3 sm:size-9 sm:rounded-xl",
                   "transition-all duration-150",
-                  "focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-surface",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
+                  canSend ? "text-accent-foreground" : "text-text-muted",
                   !canSend && "cursor-not-allowed"
                 )}
                 animate={
@@ -166,12 +163,10 @@ const ChatInput = ({
                 whileTap={
                   canSend && !shouldReduceMotion ? { scale: 0.92 } : undefined
                 }
-                transition={
-                  shouldReduceMotion ? { duration: 0.01 } : springs.snappy
-                }
+                transition={rmTransition(shouldReduceMotion, springs.snappy)}
                 aria-label="Send message"
               >
-                <ArrowUp className="size-4" />
+                <ArrowUp className="size-4 sm:size-5" />
               </m.button>
             </div>
           </div>
@@ -179,8 +174,8 @@ const ChatInput = ({
 
         {/* Disclaimer — inline below input, not a top banner */}
         <div className="flex items-center justify-center gap-1 pb-2">
-          <Shield className="size-2.5 shrink-0 text-text-muted/40" />
-          <p className="text-[10px] text-text-muted/40">
+          <Shield className="size-2.5 shrink-0 text-text-muted/40 sm:size-3" />
+          <p className="text-[10px] text-text-muted/40 sm:text-xs">
             For informational purposes only &mdash; not medical advice
           </p>
         </div>

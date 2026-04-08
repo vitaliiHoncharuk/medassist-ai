@@ -7,20 +7,22 @@ import { getDb } from "@/lib/db";
 import { documents, embeddings } from "@/lib/db/schema";
 import { chunkText } from "@/lib/rag/chunker";
 import { generateEmbeddings } from "@/lib/rag/embeddings";
+import { checkRateLimit } from "@/lib/chat/rate-limit";
+import { extractClientIp } from "@/lib/chat/extract-ip";
+import { jsonError } from "@/lib/api/response";
+import {
+  MAX_FILE_SIZE,
+  ALLOWED_MIME_TYPES,
+  ALLOWED_EXTENSIONS,
+} from "@/lib/constants";
 
 export const runtime = "nodejs";
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const ALLOWED_TYPES = new Set([
-  "application/pdf",
-  "text/plain",
-]);
-const ALLOWED_EXTENSIONS = new Set([".pdf", ".txt"]);
 const PDF_MAGIC_BYTES = [0x25, 0x50, 0x44, 0x46]; // %PDF
 
 const fileValidationSchema = z.object({
   name: z.string().min(1),
-  type: z.string().refine((t) => ALLOWED_TYPES.has(t), {
+  type: z.string().refine((t) => ALLOWED_MIME_TYPES.has(t), {
     message: "Only PDF and TXT files are supported",
   }),
   size: z.number().max(MAX_FILE_SIZE, "File size must be under 10MB"),
@@ -68,14 +70,22 @@ const validateMagicBytes = (
  */
 export const POST = async (req: Request): Promise<Response> => {
   try {
+    // Rate limit by IP — uploads are expensive (OpenAI embeddings + DB writes)
+    const ip = extractClientIp(req.headers);
+    const rateLimitResult = await checkRateLimit(ip);
+
+    if (!rateLimitResult.success) {
+      return jsonError(
+        "Too many requests. Please wait before uploading another document.",
+        429
+      );
+    }
+
     const formData = await req.formData();
     const file = formData.get("file");
 
     if (!file || !(file instanceof File)) {
-      return NextResponse.json(
-        { error: "No file provided" },
-        { status: 400 }
-      );
+      return jsonError("No file provided", 400);
     }
 
     // Validate file metadata
@@ -86,19 +96,16 @@ export const POST = async (req: Request): Promise<Response> => {
     });
 
     if (!validation.success) {
-      return NextResponse.json(
-        { error: validation.error.issues[0]?.message ?? "Invalid file" },
-        { status: 400 }
+      return jsonError(
+        validation.error.issues[0]?.message ?? "Invalid file",
+        400
       );
     }
 
     // Validate file extension matches claimed MIME type
     const ext = getFileExtension(file.name);
     if (!ALLOWED_EXTENSIONS.has(ext)) {
-      return NextResponse.json(
-        { error: "Only .pdf and .txt file extensions are supported" },
-        { status: 400 }
-      );
+      return jsonError("Only .pdf and .txt file extensions are supported", 400);
     }
 
     // Read file bytes for magic byte validation and content extraction
@@ -107,12 +114,9 @@ export const POST = async (req: Request): Promise<Response> => {
 
     // Validate magic bytes match the claimed type
     if (!validateMagicBytes(fileBytes, file.type)) {
-      return NextResponse.json(
-        {
-          error:
-            "File content does not match the claimed file type. Please upload a valid PDF or TXT file.",
-        },
-        { status: 400 }
+      return jsonError(
+        "File content does not match the claimed file type. Please upload a valid PDF or TXT file.",
+        400
       );
     }
 
@@ -133,19 +137,16 @@ export const POST = async (req: Request): Promise<Response> => {
     }
 
     if (!textContent.trim()) {
-      return NextResponse.json(
-        { error: "File appears to be empty or contains no extractable text" },
-        { status: 400 }
+      return jsonError(
+        "File appears to be empty or contains no extractable text",
+        400
       );
     }
 
     // Chunk the text
     const chunks = chunkText(textContent);
     if (chunks.length === 0) {
-      return NextResponse.json(
-        { error: "Could not generate text chunks from the file" },
-        { status: 400 }
-      );
+      return jsonError("Could not generate text chunks from the file", 400);
     }
 
     // Generate embeddings for all chunks
@@ -176,6 +177,7 @@ export const POST = async (req: Request): Promise<Response> => {
       const embeddingRows = chunks.map((chunk, i) => ({
         documentId: doc.id,
         content: chunk.content,
+        chunkIndex: chunk.index,
         embedding: embeddingVectors[i] as number[],
       }));
 
@@ -189,19 +191,31 @@ export const POST = async (req: Request): Promise<Response> => {
       name: insertedDoc.name,
       chunkCount: insertedDoc.chunkCount,
     });
-  } catch {
-    return NextResponse.json(
-      { error: "An unexpected error occurred while processing the document" },
-      { status: 500 }
+  } catch (error) {
+     
+     
+    console.error("Document upload error:", error);
+    return jsonError(
+      "An unexpected error occurred while processing the document",
+      500
     );
   }
 };
 
+const DEFAULT_PAGE_LIMIT = 50;
+
 /**
- * GET /api/documents — List all uploaded documents.
+ * GET /api/documents — List uploaded documents with pagination.
  */
-export const GET = async (): Promise<Response> => {
+export const GET = async (req: Request): Promise<Response> => {
   try {
+    const { searchParams } = new URL(req.url);
+    const limit = Math.min(
+      Number(searchParams.get("limit")) || DEFAULT_PAGE_LIMIT,
+      100
+    );
+    const offset = Math.max(Number(searchParams.get("offset")) || 0, 0);
+
     const db = getDb();
     const docs = await db
       .select({
@@ -211,13 +225,15 @@ export const GET = async (): Promise<Response> => {
         createdAt: documents.createdAt,
       })
       .from(documents)
-      .orderBy(desc(documents.createdAt));
+      .orderBy(desc(documents.createdAt))
+      .limit(limit)
+      .offset(offset);
 
     return NextResponse.json({ documents: docs });
-  } catch {
-    return NextResponse.json(
-      { error: "Failed to fetch documents" },
-      { status: 500 }
-    );
+  } catch (error) {
+     
+     
+    console.error("Document list error:", error);
+    return jsonError("Failed to fetch documents", 500);
   }
 };

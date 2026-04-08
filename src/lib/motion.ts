@@ -1,3 +1,5 @@
+import type { Target, Transition } from "motion/react";
+
 export const springs = {
   /** Message enter animation — stiffness 300 / damping 24 */
   message: { type: "spring" as const, stiffness: 300, damping: 24 },
@@ -13,13 +15,25 @@ export const springs = {
   bouncy: { type: "spring" as const, stiffness: 400, damping: 15 },
 };
 
-export const reducedMotionFallback = {
-  duration: 0.01,
-};
+export const reducedMotion = { duration: 0.01 };
 
-export const fadeOnly = {
-  initial: { opacity: 0 },
-  animate: { opacity: 1 },
-  exit: { opacity: 0 },
-  transition: { duration: 0.01 },
-};
+/**
+ * Pick between a full animation value and a fade-only fallback depending on
+ * the user's reduced-motion preference.
+ */
+export const rm = (
+  shouldReduce: boolean | null,
+  full: Target,
+  fade?: Target
+): Target =>
+  shouldReduce
+    ? (fade ?? { opacity: (full as { opacity?: number }).opacity ?? 0 })
+    : full;
+
+/**
+ * Pick a spring or the instant reduced-motion transition.
+ */
+export const rmTransition = (
+  shouldReduce: boolean | null,
+  spring: Transition
+): Transition => (shouldReduce ? reducedMotion : spring);

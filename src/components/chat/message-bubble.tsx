@@ -5,13 +5,11 @@ import type { UIMessage } from "ai";
 import { m, AnimatePresence, useReducedMotion } from "motion/react";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { springs } from "@/lib/motion";
+import { springs, rm, rmTransition } from "@/lib/motion";
 import { MarkdownRenderer } from "./markdown-renderer";
-
-type SourceInfo = {
-  documentName: string;
-  excerpt: string;
-};
+import { LogoMark } from "@/components/ui/logo-mark";
+import { extractTextFromParts } from "@/lib/chat/utils";
+import type { SourceInfo } from "@/lib/chat/types";
 
 /**
  * Parse source references from assistant message text.
@@ -59,7 +57,7 @@ const SourcePanel = ({ sources }: SourcePanelProps): ReactElement => {
         className={cn(
           "flex items-center gap-1.5 rounded-[var(--radius-sm)] px-2 py-1 text-xs text-text-muted",
           "transition-colors duration-150 hover:bg-surface hover:text-text",
-          "focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background"
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         )}
         aria-expanded={isOpen}
       >
@@ -71,7 +69,7 @@ const SourcePanel = ({ sources }: SourcePanelProps): ReactElement => {
         </span>
         <m.span
           animate={{ rotate: isOpen ? 180 : 0 }}
-          transition={shouldReduceMotion ? { duration: 0.01 } : springs.panel}
+          transition={rmTransition(shouldReduceMotion, springs.panel)}
         >
           <ChevronDown className="size-3" />
         </m.span>
@@ -80,22 +78,10 @@ const SourcePanel = ({ sources }: SourcePanelProps): ReactElement => {
       <AnimatePresence>
         {isOpen && (
           <m.div
-            initial={
-              shouldReduceMotion
-                ? { opacity: 0 }
-                : { opacity: 0, height: 0 }
-            }
-            animate={
-              shouldReduceMotion
-                ? { opacity: 1 }
-                : { opacity: 1, height: "auto" }
-            }
-            exit={
-              shouldReduceMotion ? { opacity: 0 } : { opacity: 0, height: 0 }
-            }
-            transition={
-              shouldReduceMotion ? { duration: 0.01 } : springs.panel
-            }
+            initial={rm(shouldReduceMotion, { opacity: 0, height: 0 })}
+            animate={rm(shouldReduceMotion, { opacity: 1, height: "auto" })}
+            exit={rm(shouldReduceMotion, { opacity: 0, height: 0 })}
+            transition={rmTransition(shouldReduceMotion, springs.panel)}
             className="overflow-hidden"
           >
             <div className="mt-2 space-y-1">
@@ -132,14 +118,7 @@ const MessageBubbleInner = ({
   const isUser = message.role === "user";
   const shouldReduceMotion = useReducedMotion();
 
-  const textContent =
-    message.parts
-      ?.filter(
-        (part): part is Extract<typeof part, { type: "text" }> =>
-          part.type === "text"
-      )
-      ?.map((part) => part.text)
-      ?.join("") ?? "";
+  const textContent = extractTextFromParts(message);
 
   const sources = !isUser ? parseSourceReferences(textContent) : [];
 
@@ -148,13 +127,9 @@ const MessageBubbleInner = ({
       <m.div
         layout={!shouldReduceMotion}
         className="flex w-full justify-end px-4 py-2"
-        initial={
-          shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 12 }
-        }
-        animate={
-          shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }
-        }
-        transition={shouldReduceMotion ? { duration: 0.01 } : springs.message}
+        initial={rm(shouldReduceMotion, { opacity: 0, y: 12 })}
+        animate={rm(shouldReduceMotion, { opacity: 1, y: 0 })}
+        transition={rmTransition(shouldReduceMotion, springs.message)}
       >
         <div className="max-w-[75%] rounded-[var(--radius-xl)] rounded-br-[var(--radius-sm)] bg-user-bubble px-4 py-2.5 shadow-[var(--shadow-sm)] dark:ring-1 dark:ring-white/5">
           <p className="whitespace-pre-wrap text-sm leading-relaxed text-user-bubble-text">
@@ -169,20 +144,13 @@ const MessageBubbleInner = ({
     <m.div
       layout={!shouldReduceMotion}
       className="flex w-full gap-3 px-4 py-2"
-      initial={
-        shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 12 }
-      }
-      animate={
-        shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }
-      }
-      transition={shouldReduceMotion ? { duration: 0.01 } : springs.message}
+      initial={rm(shouldReduceMotion, { opacity: 0, y: 12 })}
+      animate={rm(shouldReduceMotion, { opacity: 1, y: 0 })}
+      transition={rmTransition(shouldReduceMotion, springs.message)}
     >
       {/* Avatar with logo mark */}
       <div className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-surface-elevated ring-1 ring-border">
-        <div className="relative size-4">
-          <div className="absolute left-0 top-0 size-3 rounded-full bg-primary/20" />
-          <div className="absolute bottom-0 right-0 size-3 rounded-full bg-accent/30" />
-        </div>
+        <LogoMark size="sm" />
       </div>
 
       {/* Content with vitals stripe */}

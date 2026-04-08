@@ -20,8 +20,7 @@ export type PromptSuggestion = {
   prompt: string;
 };
 
-export type SourceReference = {
+export type SourceInfo = {
   documentName: string;
-  content: string;
-  similarity: number;
+  excerpt: string;
 };

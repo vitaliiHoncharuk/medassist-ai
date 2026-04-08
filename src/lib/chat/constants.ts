@@ -16,28 +16,28 @@ export const STORAGE_KEYS = {
 
 export const PROMPT_SUGGESTIONS: PromptSuggestion[] = [
   {
-    title: "Drug Interactions",
-    description: "Check for potential medication conflicts",
+    title: "Drug Safety",
+    description: "What are the ARIA-E risks with Leqembi and when should MRI monitoring occur?",
     prompt:
-      "What are the common drug interactions I should be aware of for patients on blood thinners?",
+      "What safety concerns has the FDA identified for Leqembi (lecanemab), and what MRI monitoring schedule is recommended?",
   },
   {
-    title: "Clinical Guidelines",
-    description: "Find treatment protocols and standards",
+    title: "Side Effects",
+    description: "How does Carbidopa/Levodopa affect vitamin B6 and seizure risk?",
     prompt:
-      "What are the current guidelines for managing Type 2 diabetes in adults?",
+      "What is the connection between Carbidopa/Levodopa, vitamin B6 deficiency, and seizures?",
   },
   {
-    title: "Formulary Lookup",
-    description: "Search drug formulary and alternatives",
+    title: "GLP-1 Safety Update",
+    description: "What did the FDA conclude about GLP-1 medications and suicidal ideation?",
     prompt:
-      "What are the preferred formulary alternatives for brand-name statins?",
+      "What were the FDA's findings on suicidal ideation risk with GLP-1 receptor agonist medications like Wegovy and Zepbound?",
   },
   {
-    title: "Dosage Reference",
-    description: "Look up medication dosing information",
+    title: "Essential Medicines",
+    description: "Which analgesics are on the WHO Essential Medicines List?",
     prompt:
-      "What is the recommended dosing for amoxicillin in pediatric patients?",
+      "What pain and palliative care medicines are included in the WHO Model List of Essential Medicines?",
   },
 ];
 
