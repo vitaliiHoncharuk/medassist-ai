@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactElement, ReactNode } from "react";
 import { Newsreader, Archivo, Geist_Mono } from "next/font/google";
 import { LazyMotion, domAnimation } from "motion/react";
+import { Providers } from "@/components/providers";
 import "./globals.css";
 
 const newsreader = Newsreader({
@@ -46,14 +47,16 @@ const RootLayout = ({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{if(window.matchMedia('(prefers-color-scheme:dark)').matches){document.documentElement.classList.add('dark')}}catch(e){}})()`,
+            __html: `(function(){try{var m=window.matchMedia('(prefers-color-scheme:dark)');function u(e){e.matches?document.documentElement.classList.add('dark'):document.documentElement.classList.remove('dark')}u(m);m.addEventListener('change',u)}catch(e){}})()`,
           }}
         />
       </head>
       <body className="antialiased">
-        <LazyMotion features={domAnimation} strict>
-          {children}
-        </LazyMotion>
+        <Providers>
+          <LazyMotion features={domAnimation} strict>
+            {children}
+          </LazyMotion>
+        </Providers>
       </body>
     </html>
   );

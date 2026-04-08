@@ -1,12 +1,16 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
+import { CHAT_CONFIG } from "./constants";
+
 type RateLimitResult = {
   success: boolean;
   remaining: number;
 };
 
 let ratelimit: Ratelimit | null = null;
+
+const windowSeconds = Math.round(CHAT_CONFIG.rateLimit.windowMs / 1000);
 
 const getRatelimit = (): Ratelimit | null => {
   if (ratelimit) return ratelimit;
@@ -20,7 +24,10 @@ const getRatelimit = (): Ratelimit | null => {
 
   ratelimit = new Ratelimit({
     redis: new Redis({ url, token }),
-    limiter: Ratelimit.slidingWindow(5, "60 s"),
+    limiter: Ratelimit.slidingWindow(
+      CHAT_CONFIG.rateLimit.requests,
+      `${windowSeconds} s`
+    ),
     analytics: false,
   });
 

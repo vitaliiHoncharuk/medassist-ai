@@ -1,7 +1,22 @@
 import type { UIMessage } from "ai";
+import { z } from "zod";
 
 import type { Conversation } from "./types";
 import { CHAT_CONFIG, STORAGE_KEYS } from "./constants";
+
+const conversationSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+const uiMessageSchema = z.object({
+  id: z.string(),
+  role: z.enum(["user", "assistant", "system"]),
+  parts: z.array(z.object({ type: z.string() }).passthrough()).optional(),
+  content: z.string().optional(),
+});
 
 const isClient = typeof window !== "undefined";
 
@@ -39,14 +54,14 @@ export const getConversations = (): Conversation[] => {
   if (!raw) return [];
   try {
     const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed as Conversation[];
+    const result = z.array(conversationSchema).safeParse(parsed);
+    return result.success ? result.data : [];
   } catch {
     return [];
   }
 };
 
-export const saveConversations = (conversations: Conversation[]): void => {
+const saveConversations = (conversations: Conversation[]): void => {
   safeSetItem(STORAGE_KEYS.conversations, JSON.stringify(conversations));
 };
 
@@ -91,13 +106,6 @@ export const updateConversation = (
   saveConversations(conversations);
 };
 
-export const deleteConversation = (id: string): void => {
-  const conversations = getConversations();
-  const filtered = conversations.filter((c) => c.id !== id);
-  saveConversations(filtered);
-  safeRemoveItem(STORAGE_KEYS.messages(id));
-};
-
 // --- Messages ---
 
 export const getMessages = (conversationId: string): UIMessage[] => {
@@ -105,8 +113,8 @@ export const getMessages = (conversationId: string): UIMessage[] => {
   if (!raw) return [];
   try {
     const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed as UIMessage[];
+    const result = z.array(uiMessageSchema).safeParse(parsed);
+    return result.success ? (result.data as UIMessage[]) : [];
   } catch {
     return [];
   }
@@ -116,14 +124,12 @@ export const saveMessages = (
   conversationId: string,
   messages: UIMessage[]
 ): void => {
+  // Enforce maxMessages client-side to prevent unbounded localStorage growth
+  const trimmed = messages.slice(-CHAT_CONFIG.maxMessages * 2);
   safeSetItem(
     STORAGE_KEYS.messages(conversationId),
-    JSON.stringify(messages)
+    JSON.stringify(trimmed)
   );
-};
-
-export const clearMessages = (conversationId: string): void => {
-  safeRemoveItem(STORAGE_KEYS.messages(conversationId));
 };
 
 // --- Utility ---

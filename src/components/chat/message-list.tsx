@@ -11,7 +11,7 @@ import type { UIMessage } from "ai";
 import { ArrowDown } from "lucide-react";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
-import { springs } from "@/lib/motion";
+import { springs, rm, rmTransition } from "@/lib/motion";
 import { MessageBubble } from "./message-bubble";
 import { TypingIndicator } from "./typing-indicator";
 
@@ -96,28 +96,14 @@ const MessageList = ({
               "absolute bottom-4 left-1/2 z-10 flex size-10 -translate-x-1/2 items-center justify-center",
               "rounded-full bg-accent text-accent-foreground",
               "shadow-[var(--shadow-md)]",
-              "focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background"
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             )}
-            initial={
-              shouldReduceMotion
-                ? { opacity: 0 }
-                : { opacity: 0, scale: 0.5, y: 20 }
-            }
-            animate={
-              shouldReduceMotion
-                ? { opacity: 1 }
-                : { opacity: 1, scale: 1, y: 0 }
-            }
-            exit={
-              shouldReduceMotion
-                ? { opacity: 0 }
-                : { opacity: 0, scale: 0.5, y: 20 }
-            }
+            initial={rm(shouldReduceMotion, { opacity: 0, scale: 0.5, y: 20 })}
+            animate={rm(shouldReduceMotion, { opacity: 1, scale: 1, y: 0 })}
+            exit={rm(shouldReduceMotion, { opacity: 0, scale: 0.5, y: 20 })}
             whileHover={shouldReduceMotion ? undefined : { scale: 1.05 }}
             whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
-            transition={
-              shouldReduceMotion ? { duration: 0.01 } : springs.bouncy
-            }
+            transition={rmTransition(shouldReduceMotion, springs.bouncy)}
             aria-label="Scroll to bottom"
           >
             <ArrowDown className="size-4" />

@@ -4,15 +4,12 @@ import { useState, useCallback, type ReactElement } from "react";
 import { FileText, Trash2, Loader2 } from "lucide-react";
 import { m, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
-import { springs } from "@/lib/motion";
+import { springs, rm, rmTransition } from "@/lib/motion";
 import { Button } from "@/components/ui/button";
+import { useDeleteDocument } from "@/lib/api/hooks";
+import type { DocumentDTO } from "@/lib/db/schema";
 
-type DocumentCardProps = {
-  id: string;
-  name: string;
-  chunkCount: number;
-  createdAt: string | Date | null;
-  onDelete: (id: string) => void;
+type DocumentCardProps = DocumentDTO & {
   index: number;
 };
 
@@ -21,42 +18,29 @@ const DocumentCard = ({
   name,
   chunkCount,
   createdAt,
-  onDelete,
   index,
 }: DocumentCardProps): ReactElement => {
-  const [isDeleting, setIsDeleting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const shouldReduceMotion = useReducedMotion();
 
-  const handleDelete = useCallback(async (): Promise<void> => {
-    setIsDeleting(true);
-    try {
-      const response = await fetch(`/api/documents/${id}`, {
-        method: "DELETE",
-      });
-
-      if (response.ok) {
-        onDelete(id);
-      }
-    } catch {
-      // Silently handle error
-    } finally {
-      setIsDeleting(false);
-      setShowConfirm(false);
-    }
-  }, [id, onDelete]);
+  const deleteMutation = useDeleteDocument();
+  const isDeleting = deleteMutation.isPending;
+  const deleteError = deleteMutation.error;
 
   const handleDeleteClick = useCallback((): void => {
     if (showConfirm) {
-      void handleDelete();
+      deleteMutation.mutate(id, {
+        onSettled: () => setShowConfirm(false),
+      });
     } else {
       setShowConfirm(true);
     }
-  }, [showConfirm, handleDelete]);
+  }, [showConfirm, id, deleteMutation]);
 
   const handleCancelDelete = useCallback((): void => {
     setShowConfirm(false);
-  }, []);
+    deleteMutation.reset();
+  }, [deleteMutation]);
 
   const formattedDate = createdAt
     ? new Date(createdAt).toLocaleDateString("en-US", {
@@ -69,26 +53,10 @@ const DocumentCard = ({
   return (
     <m.div
       layout={!shouldReduceMotion}
-      initial={
-        shouldReduceMotion
-          ? { opacity: 0 }
-          : { opacity: 0, y: 12, scale: 0.96 }
-      }
-      animate={
-        shouldReduceMotion
-          ? { opacity: 1 }
-          : { opacity: 1, y: 0, scale: 1 }
-      }
-      exit={
-        shouldReduceMotion
-          ? { opacity: 0 }
-          : { opacity: 0, y: -8, scale: 0.96 }
-      }
-      transition={
-        shouldReduceMotion
-          ? { duration: 0.01 }
-          : { ...springs.message, delay: index * 0.05 }
-      }
+      initial={rm(shouldReduceMotion, { opacity: 0, y: 12, scale: 0.96 })}
+      animate={rm(shouldReduceMotion, { opacity: 1, y: 0, scale: 1 })}
+      exit={rm(shouldReduceMotion, { opacity: 0, y: -8, scale: 0.96 })}
+      transition={rmTransition(shouldReduceMotion, { ...springs.message, delay: index * 0.05 })}
       className={cn(
         "group relative flex flex-col gap-3 rounded-xl border border-border bg-surface p-4",
         "transition-all duration-200",
@@ -146,6 +114,11 @@ const DocumentCard = ({
             {chunkCount} {chunkCount === 1 ? "chunk" : "chunks"}
           </span>
         </div>
+        {deleteError && (
+          <p className="mt-1.5 text-[11px] text-error" role="alert">
+            {deleteError.message}
+          </p>
+        )}
       </div>
     </m.div>
   );

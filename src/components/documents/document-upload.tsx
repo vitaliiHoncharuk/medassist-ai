@@ -11,15 +11,14 @@ import {
 import { Upload, FileText, Loader2 } from "lucide-react";
 import { m, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
-import { springs } from "@/lib/motion";
+import { springs, rm, rmTransition } from "@/lib/motion";
 import { Button } from "@/components/ui/button";
+import { uploadDocument } from "@/lib/api/documents";
+import { MAX_FILE_SIZE, ALLOWED_MIME_TYPES } from "@/lib/constants";
 
 type DocumentUploadProps = {
   onUploadComplete: () => void;
 };
-
-const ACCEPTED_TYPES = new Set(["application/pdf", "text/plain"]);
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 const DocumentUpload = ({
   onUploadComplete,
@@ -31,7 +30,7 @@ const DocumentUpload = ({
   const shouldReduceMotion = useReducedMotion();
 
   const validateFile = useCallback((file: File): string | null => {
-    if (!ACCEPTED_TYPES.has(file.type)) {
+    if (!ALLOWED_MIME_TYPES.has(file.type)) {
       return "Only PDF and TXT files are supported";
     }
     if (file.size > MAX_FILE_SIZE) {
@@ -52,30 +51,12 @@ const DocumentUpload = ({
       setError(null);
 
       try {
-        const formData = new FormData();
-        formData.append("file", file);
-
-        const response = await fetch("/api/documents", {
-          method: "POST",
-          body: formData,
-        });
-
-        if (!response.ok) {
-          const data: unknown = await response.json();
-          const errorMessage =
-            data &&
-            typeof data === "object" &&
-            "error" in data &&
-            typeof (data as { error: unknown }).error === "string"
-              ? (data as { error: string }).error
-              : "Upload failed";
-          setError(errorMessage);
-          return;
-        }
-
+        await uploadDocument(file);
         onUploadComplete();
-      } catch {
-        setError("Network error. Please try again.");
+      } catch (error) {
+        setError(
+          error instanceof Error ? error.message : "Network error. Please try again."
+        );
       } finally {
         setIsUploading(false);
       }
@@ -126,9 +107,9 @@ const DocumentUpload = ({
 
   return (
     <m.div
-      initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 12 }}
-      animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
-      transition={shouldReduceMotion ? { duration: 0.01 } : springs.gentle}
+      initial={rm(shouldReduceMotion, { opacity: 0, y: 12 })}
+      animate={rm(shouldReduceMotion, { opacity: 1, y: 0 })}
+      transition={rmTransition(shouldReduceMotion, springs.gentle)}
     >
       <div
         onDragOver={handleDragOver}
@@ -146,7 +127,7 @@ const DocumentUpload = ({
         className={cn(
           "group relative flex h-56 cursor-pointer flex-col items-center justify-center gap-4 overflow-hidden rounded-2xl border-2 border-dashed p-10",
           "transition-all duration-300",
-          "focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           isDragging
             ? "border-accent bg-accent/5"
             : "border-border hover:border-accent/40 hover:bg-surface/50",

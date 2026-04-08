@@ -8,7 +8,7 @@ import {
   vector,
 } from "drizzle-orm/pg-core";
 
-import { EMBEDDING_DIM } from "@/lib/rag/embeddings";
+import { EMBEDDING_DIM } from "@/lib/constants";
 
 export const documents = pgTable("documents", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -26,6 +26,7 @@ export const embeddings = pgTable(
       .notNull()
       .references(() => documents.id, { onDelete: "cascade" }),
     content: text("content").notNull(),
+    chunkIndex: integer("chunk_index").notNull().default(0),
     embedding: vector("embedding", { dimensions: EMBEDDING_DIM }).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   },
@@ -41,3 +42,6 @@ export type Document = typeof documents.$inferSelect;
 export type NewDocument = typeof documents.$inferInsert;
 export type Embedding = typeof embeddings.$inferSelect;
 export type NewEmbedding = typeof embeddings.$inferInsert;
+
+/** Client-safe document shape returned by API endpoints. */
+export type DocumentDTO = Pick<Document, "id" | "name" | "chunkCount" | "createdAt">;
