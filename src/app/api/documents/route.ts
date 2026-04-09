@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { PDFParse } from "pdf-parse";
 import { desc } from "drizzle-orm";
 
 import { getDb } from "@/lib/db";
@@ -124,6 +123,7 @@ export const POST = async (req: Request): Promise<Response> => {
     let textContent: string;
 
     if (file.type === "application/pdf") {
+      const { PDFParse } = await import("pdf-parse");
       const buffer = Buffer.from(arrayBuffer);
       const parser = new PDFParse({ data: new Uint8Array(buffer) });
       try {
