@@ -15,7 +15,7 @@ import fs from "node:fs";
 import path from "node:path";
 import ws from "ws";
 import { neonConfig } from "@neondatabase/serverless";
-import { PDFParse } from "pdf-parse";
+import { extractText } from "unpdf";
 import { eq } from "drizzle-orm";
 
 // Node.js < 22 doesn't have global WebSocket — Neon serverless driver needs it
@@ -30,13 +30,8 @@ const SAMPLE_DOCS_DIR = path.resolve(process.cwd(), "sample_docs");
 
 const extractPdfText = async (filePath: string): Promise<string> => {
   const buffer = fs.readFileSync(filePath);
-  const parser = new PDFParse({ data: new Uint8Array(buffer) });
-  try {
-    const result = await parser.getText();
-    return result.text;
-  } finally {
-    await parser.destroy();
-  }
+  const { text } = await extractText(new Uint8Array(buffer));
+  return text.join("\n");
 };
 
 const seed = async (): Promise<void> => {

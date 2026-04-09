@@ -123,15 +123,9 @@ export const POST = async (req: Request): Promise<Response> => {
     let textContent: string;
 
     if (file.type === "application/pdf") {
-      const { PDFParse } = await import("pdf-parse");
-      const buffer = Buffer.from(arrayBuffer);
-      const parser = new PDFParse({ data: new Uint8Array(buffer) });
-      try {
-        const textResult = await parser.getText();
-        textContent = textResult.text;
-      } finally {
-        await parser.destroy();
-      }
+      const { extractText } = await import("unpdf");
+      const { text } = await extractText(new Uint8Array(arrayBuffer));
+      textContent = text.join("\n");
     } else {
       textContent = new TextDecoder().decode(fileBytes);
     }
