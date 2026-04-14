@@ -140,6 +140,22 @@ const ChatContainer = (): ReactElement => {
     setInput("");
   }, [setMessages]);
 
+  const handleRetry = useCallback((): void => {
+    // Find the last user message and resend it
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const msg = messages[i];
+      if (msg?.role === "user") {
+        const text = extractTextFromParts(msg);
+        if (text) {
+          // Remove the failed assistant message (if any) and resend
+          setMessages(messages.slice(0, i + 1));
+          sendMessage({ text });
+          return;
+        }
+      }
+    }
+  }, [messages, setMessages, sendMessage]);
+
   const handleErrorReset = useCallback((): void => {
     setMessages([]);
   }, [setMessages]);
@@ -150,12 +166,15 @@ const ChatContainer = (): ReactElement => {
 
       <main className="flex min-h-0 flex-1 flex-col">
         <ErrorBoundary onReset={handleErrorReset}>
-          {error ? (
-            <ErrorFallback onReset={handleErrorReset} />
-          ) : messages.length === 0 ? (
+          {messages.length === 0 && !error ? (
             <EmptyState onSelectPrompt={handleSelectPrompt} />
           ) : (
-            <MessageList messages={messages} isStreaming={isStreaming} />
+            <MessageList
+              messages={messages}
+              isStreaming={isStreaming}
+              error={error ?? undefined}
+              onRetry={handleRetry}
+            />
           )}
         </ErrorBoundary>
 
