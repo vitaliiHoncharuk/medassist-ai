@@ -95,9 +95,7 @@ const MessageList = ({
               </div>
               <div className="flex flex-col gap-2">
                 <p className="text-sm text-error">
-                  {error.message.includes("Overloaded")
-                    ? "The AI service is currently overloaded. Please try again in a moment."
-                    : "Something went wrong. Please try again."}
+                  {error.message || "Something went wrong. Please try again."}
                 </p>
                 {onRetry && (
                   <Button
