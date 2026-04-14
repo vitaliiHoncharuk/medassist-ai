@@ -8,16 +8,19 @@ import {
   type ReactElement,
 } from "react";
 import type { UIMessage } from "ai";
-import { ArrowDown } from "lucide-react";
+import { AlertTriangle, ArrowDown, RefreshCw } from "lucide-react";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { springs, rm, rmTransition } from "@/lib/motion";
+import { Button } from "@/components/ui/button";
 import { MessageBubble } from "./message-bubble";
 import { TypingIndicator } from "./typing-indicator";
 
 type MessageListProps = {
   messages: UIMessage[];
   isStreaming: boolean;
+  error?: Error;
+  onRetry?: () => void;
 };
 
 const SCROLL_THRESHOLD = 200;
@@ -25,6 +28,8 @@ const SCROLL_THRESHOLD = 200;
 const MessageList = ({
   messages,
   isStreaming,
+  error,
+  onRetry,
 }: MessageListProps): ReactElement => {
   const containerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -83,6 +88,29 @@ const MessageList = ({
               messages[messages.length - 1]?.role !== "assistant") && (
               <TypingIndicator />
             )}
+          {error && (
+            <div className="flex items-start gap-3 px-4 sm:px-6">
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-error/10">
+                <AlertTriangle className="size-4 text-error" />
+              </div>
+              <div className="flex flex-col gap-2">
+                <p className="text-sm text-error">
+                  {error.message || "Something went wrong. Please try again."}
+                </p>
+                {onRetry && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={onRetry}
+                    className="w-fit gap-1.5"
+                  >
+                    <RefreshCw className="size-3.5" />
+                    Retry
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
           <div ref={bottomRef} />
         </div>
       </div>
